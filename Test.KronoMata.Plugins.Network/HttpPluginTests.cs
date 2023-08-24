@@ -1,5 +1,7 @@
 using KronoMata.Plugins.Network;
 using KronoMata.Public;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Test.KronoMata.Plugins.Network
 {
@@ -119,6 +121,44 @@ namespace Test.KronoMata.Plugins.Network
             Assert.That(log.Count, Is.EqualTo(1));
             Assert.That(log[0].IsError, Is.True);
             Assert.That(log[0].Message, Is.EqualTo("Received HTTP Status Code NotFound"));
+        }
+
+        [Test]
+        public void Can_Send_Http_With_Headers()
+        {
+            var headerValue = @"X-KronoMata-Header-1=Header 1 Value
+X-KronoMata-Header-2=Header 2 Value";
+
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", "http://httpbin.org/anything" },
+                { "Headers", headerValue }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+            Assert.That(log[0].IsError, Is.False);
+
+            // HttpBin returns json. Let's check it.
+            var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
+
+            // httpBin Pascal cases values inside of dashes
+            var header1Value = httpBinResponse.headers["X-Kronomata-Header-1"];
+            var header2Value = httpBinResponse.headers["X-Kronomata-Header-2"];
+
+            Assert.That(header1Value, Is.EqualTo("Header 1 Value"));
+            Assert.That(header2Value, Is.EqualTo("Header 2 Value"));
+        }
+
+        private class HttpBinResponse
+        {
+            public Dictionary<string, string> args { get; set; }
+            public Dictionary<string, string> headers { get; set; }
+            public string origin { get; set; }
+            public string url { get; set; }
+            public JObject json { get; set; }
+            public Dictionary<string, string> forms { get; set; }
         }
     }
 }

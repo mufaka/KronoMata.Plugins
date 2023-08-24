@@ -166,6 +166,43 @@ namespace KronoMata.Plugins.Network
             return log;
         }
 
+        private List<KeyValuePair<string, string>> ReadValues(string rawProperties)
+        {
+            if (String.IsNullOrWhiteSpace(rawProperties)) return new List<KeyValuePair<string, string>>();
+
+            var reader = new StringReader(rawProperties);
+            var keyValuePairs = new List<KeyValuePair<string, string>>();
+
+            string line;
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+            while ((line = reader.ReadLine()) != null)
+            {
+                var tokens = line.Trim().Split('=', StringSplitOptions.RemoveEmptyEntries);
+
+                if (tokens.Length > 1)
+                {
+                    keyValuePairs.Add(new KeyValuePair<string, string>(tokens[0], tokens[1]));
+                }
+            }
+#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+
+            return keyValuePairs;
+        }
+
+        private void AddHeaders(HttpRequestMessage message, Dictionary<string, string> parameters)
+        {
+            if (parameters.ContainsKey("Headers"))
+            {
+                var keyValuePairs = ReadValues(parameters["Headers"]);
+
+                foreach (var keyValuePair in keyValuePairs)
+                {
+                    // NOTE: The value can be a comma separated list
+                    message.Headers.Add(keyValuePair.Key, keyValuePair.Value);
+                }
+            }
+        }
+
         private List<PluginResult> HttpGetResult(string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
@@ -174,6 +211,9 @@ namespace KronoMata.Plugins.Network
             {
                 var client = new HttpClient();
                 var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+                AddHeaders(request, parameters);
+
                 var response = client.Send(request);
 
                 bool success = false;
