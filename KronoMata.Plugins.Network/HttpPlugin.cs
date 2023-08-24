@@ -118,7 +118,37 @@ namespace KronoMata.Plugins.Network
                 }
                 else
                 {
-                    // WebClient or HttpClient? SSL Cert?
+                    var url = pluginConfig["Uri"];
+
+                    if (!Uri.IsWellFormedUriString(url, UriKind.Absolute))
+                    {
+                        throw new ArgumentException("Invalid url provided. It must be well formed and absolute. eg: http://www.domain.com");
+                    }
+
+                    var uri = new Uri(pluginConfig["Uri"]);
+
+                    if (uri.Scheme.ToLower() != "http" && uri.Scheme.ToLower() != "https")
+                    {
+                        throw new ArgumentException("The Uri scheme must be either http or https.");
+                    }
+
+                    var method = pluginConfig["Method"];
+
+                    switch (method)
+                    {
+                        case "GET":
+                            return HttpGetResult(url, pluginConfig);
+                        case "PUT":
+                            return HttpPutResult(url, pluginConfig);
+                        case "POST":
+                            return HttpPostResult(url, pluginConfig);
+                        case "PATCH":
+                            return HttpPatchResult(url, pluginConfig);
+                        case "DELETE":
+                            return HttpDeleteResult(url, pluginConfig);
+                        default:
+                            throw new ArgumentException($"Unexpected Method provided. Expecting one of GET,PUT,POST,PATCH,DELETE but received {method}.");
+                    }
                 }
             }
             catch (Exception ex)
@@ -133,5 +163,36 @@ namespace KronoMata.Plugins.Network
 
             return log;
         }
+
+        private List<PluginResult> HttpGetResult(string url, Dictionary<string, string> parameters)
+        {
+            var log = new List<PluginResult>();
+            return log;
+        }
+
+        private List<PluginResult> HttpPutResult(string url, Dictionary<string, string> parameters)
+        {
+            var log = new List<PluginResult>();
+            return log;
+        }
+
+        private List<PluginResult> HttpPostResult(string url, Dictionary<string, string> parameters)
+        {
+            var log = new List<PluginResult>();
+            return log;
+        }
+
+        private List<PluginResult> HttpPatchResult(string url, Dictionary<string, string> parameters)
+        {
+            var log = new List<PluginResult>();
+            return log;
+        }
+
+        private List<PluginResult> HttpDeleteResult(string url, Dictionary<string, string> parameters)
+        {
+            var log = new List<PluginResult>();
+            return log;
+        }
+
     }
 }
