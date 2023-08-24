@@ -141,7 +141,6 @@ Kronomata-Header-2=Header 2 Value";
             Assert.That(log.Count, Is.EqualTo(1));
             Assert.That(log[0].IsError, Is.False);
 
-            // HttpBin returns json. Let's check it.
             var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
 
             var header1Value = httpBinResponse.headers["Kronomata-Header-1"];
@@ -149,6 +148,86 @@ Kronomata-Header-2=Header 2 Value";
 
             Assert.That(header1Value, Is.EqualTo("Header 1 Value"));
             Assert.That(header2Value, Is.EqualTo("Header 2 Value"));
+        }
+
+        [Test]
+        public void Can_Get_Http_With_Query()
+        {
+            var queryValue = @"foo=bar
+biz=baz";
+
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", "http://httpbin.org/anything" },
+                { "Query Parameters", queryValue }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+            Assert.That(log[0].IsError, Is.False);
+
+            var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
+
+            var arg1 = httpBinResponse.args["foo"];
+            var arg2 = httpBinResponse.args["biz"];
+
+            Assert.That(arg1, Is.EqualTo("bar"));
+            Assert.That(arg2, Is.EqualTo("baz"));
+        }
+
+        [Test]
+        public void Can_Get_Http_With_Query_With_Spaces()
+        {
+            var queryValue = @"foo 1=bar 1
+biz 1=baz 1";
+
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", "http://httpbin.org/anything" },
+                { "Query Parameters", queryValue }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+            Assert.That(log[0].IsError, Is.False);
+
+            var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
+
+            var arg1 = httpBinResponse.args["foo 1"];
+            var arg2 = httpBinResponse.args["biz 1"];
+
+            Assert.That(arg1, Is.EqualTo("bar 1"));
+            Assert.That(arg2, Is.EqualTo("baz 1"));
+        }
+
+        [Test]
+        public void Can_Get_Http_With_Query_And_Existing_Params()
+        {
+            var queryValue = @"foo 1=bar 1
+biz 1=baz 1";
+
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", "http://httpbin.org/anything?existing=hello" },
+                { "Query Parameters", queryValue }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+            Assert.That(log[0].IsError, Is.False);
+
+            var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
+
+            var arg1 = httpBinResponse.args["foo 1"];
+            var arg2 = httpBinResponse.args["biz 1"];
+            var arg3 = httpBinResponse.args["existing"];
+
+            Assert.That(arg1, Is.EqualTo("bar 1"));
+            Assert.That(arg2, Is.EqualTo("baz 1"));
+            Assert.That(arg3, Is.EqualTo("hello"));
         }
 
         private class HttpBinResponse

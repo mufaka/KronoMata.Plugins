@@ -1,11 +1,6 @@
 ﻿using KronoMata.Public;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Encodings.Web;
 
 namespace KronoMata.Plugins.Network
 {
@@ -50,7 +45,7 @@ namespace KronoMata.Plugins.Network
 
                 parameters.Add(new PluginParameter()
                 {
-                    Name = "Queries",
+                    Name = "Query Parameters",
                     Description = "Query string parameters for the request. 1 per line in the form of {Name}={Value}",
                     DataType = ConfigurationDataType.Text,
                     IsRequired = false
@@ -66,16 +61,16 @@ namespace KronoMata.Plugins.Network
 
                 parameters.Add(new PluginParameter()
                 {
-                    Name = "AuthUser",
-                    Description = "Basic authentication username.",
+                    Name = "Authentication User",
+                    Description = "The basic authentication username.",
                     DataType = ConfigurationDataType.String,
                     IsRequired = false
                 });
 
                 parameters.Add(new PluginParameter()
                 {
-                    Name = "AuthPassword",
-                    Description = "Basic authentication password",
+                    Name = "Authentication Password",
+                    Description = "The basic authentication password",
                     DataType = ConfigurationDataType.Password,
                     IsRequired = false
                 });
@@ -135,6 +130,7 @@ namespace KronoMata.Plugins.Network
                     }
 
                     var method = pluginConfig["Method"];
+                    url = GetUrlWithQueryStringParameters(url, pluginConfig);
 
                     switch (method)
                     {
@@ -203,6 +199,60 @@ namespace KronoMata.Plugins.Network
             }
         }
 
+        private string GetUrlWithQueryStringParameters(string url, Dictionary<string, string> parameters)
+        {
+            if (parameters.ContainsKey("Query Parameters"))
+            {
+                var uriBuilder = new UriBuilder(url);
+                var keyValuePairs = ReadValues(parameters["Query Parameters"]);
+
+                foreach (var keyValuePair in keyValuePairs)
+                {
+                    string query = $"{Uri.EscapeDataString(keyValuePair.Key)}={Uri.EscapeDataString(keyValuePair.Value)}";
+
+                    if (uriBuilder.Query != null && uriBuilder.Query.Length > 1)
+                    {
+                        uriBuilder.Query = uriBuilder.Query + "&" + query;
+                    }
+                    else
+                    {
+                        // .NET Core version of UriBuilder automatically adds the ?
+                        uriBuilder.Query = query;
+                    }
+                }
+
+                return uriBuilder.Uri.AbsoluteUri;
+            }
+            else
+            {
+                return url;
+            }
+        }
+
+        private bool StatusCodeMeansSuccess(HttpStatusCode statusCode)
+        {
+            // https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes
+            // https://datatracker.ietf.org/doc/html/rfc2616
+            // https://learn.microsoft.com/en-us/dotnet/api/system.net.httpstatuscode?view=net-6.0
+            switch (statusCode)
+            {
+                // Successful 2xx
+                case HttpStatusCode.OK:                             // 200
+                case HttpStatusCode.Created:                        // 201
+                case HttpStatusCode.Accepted:                       // 202
+                case HttpStatusCode.NonAuthoritativeInformation:    // 203
+                case HttpStatusCode.NoContent:                      // 204
+                case HttpStatusCode.ResetContent:                   // 205
+                case HttpStatusCode.PartialContent:                 // 206
+                case HttpStatusCode.MultipleChoices:                // 207
+                case HttpStatusCode.AlreadyReported:                // 208
+                case HttpStatusCode.IMUsed:                         // 226
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private List<PluginResult> HttpGetResult(string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
@@ -216,36 +266,12 @@ namespace KronoMata.Plugins.Network
 
                 var response = client.Send(request);
 
-                bool success = false;
-
-                // https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes
-                // https://datatracker.ietf.org/doc/html/rfc2616
-                // https://learn.microsoft.com/en-us/dotnet/api/system.net.httpstatuscode?view=net-6.0
-                switch (response.StatusCode)
-                {
-                    // Successful 2xx
-                    case HttpStatusCode.OK:                             // 200
-                    case HttpStatusCode.Created:                        // 201
-                    case HttpStatusCode.Accepted:                       // 202
-                    case HttpStatusCode.NonAuthoritativeInformation:    // 203
-                    case HttpStatusCode.NoContent:                      // 204
-                    case HttpStatusCode.ResetContent:                   // 205
-                    case HttpStatusCode.PartialContent:                 // 206
-                    case HttpStatusCode.MultipleChoices:                // 207
-                    case HttpStatusCode.AlreadyReported:                // 208
-                    case HttpStatusCode.IMUsed:                         // 226
-                        success = true;
-                        break;
-                }
-
-                // QUESTION: What happens when the status code returned from the server
-                //           isn't in the HttpStatusCode enum? 
-
-                if (success)
+                if (StatusCodeMeansSuccess(response.StatusCode))
                 {
                     using var reader = new StreamReader(response.Content.ReadAsStream());
                     var result = reader.ReadToEnd();
 
+                    // TODO: The result should probably be trimmed
                     log.Add(new PluginResult()
                     {
                         IsError = false,
