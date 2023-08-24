@@ -5,6 +5,8 @@ VisualStudioVersion = 17.7.34003.232
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KronoMata.Plugins.Network", "KronoMata.Plugins.Network\KronoMata.Plugins.Network.csproj", "{DDC324AD-3EC4-46B3-BE6C-6608740D104D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.KronoMata.Plugins.Network", "Test.KronoMata.Plugins.Network\Test.KronoMata.Plugins.Network.csproj", "{E6173FD4-549B-4B9F-A4B2-E39883F36B34}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{DDC324AD-3EC4-46B3-BE6C-6608740D104D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDC324AD-3EC4-46B3-BE6C-6608740D104D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDC324AD-3EC4-46B3-BE6C-6608740D104D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6173FD4-549B-4B9F-A4B2-E39883F36B34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6173FD4-549B-4B9F-A4B2-E39883F36B34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6173FD4-549B-4B9F-A4B2-E39883F36B34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6173FD4-549B-4B9F-A4B2-E39883F36B34}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
