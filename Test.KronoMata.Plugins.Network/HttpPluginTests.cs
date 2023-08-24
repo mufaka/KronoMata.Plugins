@@ -90,5 +90,35 @@ namespace Test.KronoMata.Plugins.Network
             Assert.That(log[0].IsError, Is.True);
             Assert.That(log[0].Message, Is.EqualTo("Unexpected Method provided. Expecting one of GET,PUT,POST,PATCH,DELETE but received GETSOME."));
         }
+
+        [Test]
+        public void Can_Get_Http_With_No_Parameters()
+        {
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", "http://httpbin.org/anything" }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+            Assert.That(log[0].IsError, Is.False);
+
+        }
+
+        [Test]
+        public void Cannot_Get_Http_With_Incorrect_Url()
+        {
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", "http://httpbin.org/anythingbutthis" }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+            Assert.That(log[0].IsError, Is.True);
+            Assert.That(log[0].Message, Is.EqualTo("Received HTTP Status Code NotFound"));
+        }
     }
 }

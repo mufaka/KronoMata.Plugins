@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -33,7 +35,7 @@ namespace KronoMata.Plugins.Network
                 parameters.Add(new PluginParameter()
                 {
                     Name = "Uri",
-                    Description = "The endpoint URL for the request.",
+                    Description = "The endpoint URL for the request. (http://xyz.somedomain.com)",
                     DataType = ConfigurationDataType.String,
                     IsRequired = true
                 });
@@ -167,30 +169,154 @@ namespace KronoMata.Plugins.Network
         private List<PluginResult> HttpGetResult(string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
+
+            try
+            {
+                var client = new HttpClient();
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                var response = client.Send(request);
+
+                bool success = false;
+
+                // https://www.rfc-editor.org/rfc/rfc9110.html#name-status-codes
+                // https://datatracker.ietf.org/doc/html/rfc2616
+                // https://learn.microsoft.com/en-us/dotnet/api/system.net.httpstatuscode?view=net-6.0
+                switch (response.StatusCode)
+                {
+                    // Successful 2xx
+                    case HttpStatusCode.OK:                             // 200
+                    case HttpStatusCode.Created:                        // 201
+                    case HttpStatusCode.Accepted:                       // 202
+                    case HttpStatusCode.NonAuthoritativeInformation:    // 203
+                    case HttpStatusCode.NoContent:                      // 204
+                    case HttpStatusCode.ResetContent:                   // 205
+                    case HttpStatusCode.PartialContent:                 // 206
+                    case HttpStatusCode.MultipleChoices:                // 207
+                    case HttpStatusCode.AlreadyReported:                // 208
+                    case HttpStatusCode.IMUsed:                         // 226
+                        success = true;
+                        break;
+                }
+
+                // QUESTION: What happens when the status code returned from the server
+                //           isn't in the HttpStatusCode enum? 
+
+                if (success)
+                {
+                    using var reader = new StreamReader(response.Content.ReadAsStream());
+                    var result = reader.ReadToEnd();
+
+                    log.Add(new PluginResult()
+                    {
+                        IsError = false,
+                        Message = $"Request Successful ({response.StatusCode})",
+                        Detail = result
+                    });
+                }
+                else
+                {
+                    log.Add(new PluginResult()
+                    {
+                        IsError = true,
+                        Message = $"Received HTTP Status Code {response.StatusCode}",
+                        Detail = "For a complete list of status codes and their meaning, visit https://learn.microsoft.com/en-us/dotnet/api/system.net.httpstatuscode?view=net-6.0"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Add(new PluginResult()
+                {
+                    IsError = true,
+                    Message = ex.Message,
+                    Detail = ex.StackTrace ?? String.Empty
+                });
+            }
+
             return log;
         }
 
         private List<PluginResult> HttpPutResult(string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
+
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                log.Add(new PluginResult()
+                {
+                    IsError = true,
+                    Message = ex.Message,
+                    Detail = ex.StackTrace ?? String.Empty
+                });
+            }
+
             return log;
         }
 
         private List<PluginResult> HttpPostResult(string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
+
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                log.Add(new PluginResult()
+                {
+                    IsError = true,
+                    Message = ex.Message,
+                    Detail = ex.StackTrace ?? String.Empty
+                });
+            }
+
             return log;
         }
 
         private List<PluginResult> HttpPatchResult(string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
+
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                log.Add(new PluginResult()
+                {
+                    IsError = true,
+                    Message = ex.Message,
+                    Detail = ex.StackTrace ?? String.Empty
+                });
+            }
+
             return log;
         }
 
         private List<PluginResult> HttpDeleteResult(string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
+
+            try
+            {
+
+            }
+            catch (Exception ex)
+            {
+                log.Add(new PluginResult()
+                {
+                    IsError = true,
+                    Message = ex.Message,
+                    Detail = ex.StackTrace ?? String.Empty
+                });
+            }
+
             return log;
         }
 
