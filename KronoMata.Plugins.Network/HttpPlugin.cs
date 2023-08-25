@@ -68,6 +68,22 @@ namespace KronoMata.Plugins.Network
                     IsRequired = false
                 });
 
+                parameters.Add(new PluginParameter()
+                {
+                    Name = "Authentication User",
+                    Description = "The basic authentication username.",
+                    DataType = ConfigurationDataType.String,
+                    IsRequired = false
+                });
+
+                parameters.Add(new PluginParameter()
+                {
+                    Name = "Authentication Password",
+                    Description = "The basic authentication password",
+                    DataType = ConfigurationDataType.Password,
+                    IsRequired = false
+                });
+
                 return parameters;
             }
         }
@@ -128,15 +144,15 @@ namespace KronoMata.Plugins.Network
                     switch (method)
                     {
                         case "GET":
-                            return HttpGetResult(url, pluginConfig);
+                            return HttpGetResult(HttpMethod.Get, url, pluginConfig);
                         case "PUT":
-                            return HttpPutResult(url, pluginConfig);
+                            return HttpGetResult(HttpMethod.Put, url, pluginConfig);
                         case "POST":
-                            return HttpPostResult(url, pluginConfig);
+                            return HttpGetResult(HttpMethod.Post, url, pluginConfig);
                         case "PATCH":
-                            return HttpPatchResult(url, pluginConfig);
+                            return HttpGetResult(HttpMethod.Patch, url, pluginConfig);
                         case "DELETE":
-                            return HttpDeleteResult(url, pluginConfig);
+                            return HttpGetResult(HttpMethod.Delete, url, pluginConfig);
                         default:
                             throw new ArgumentException($"Unexpected Method provided. Expecting one of GET,PUT,POST,PATCH,DELETE but received {method}.");
                     }
@@ -155,14 +171,14 @@ namespace KronoMata.Plugins.Network
             return log;
         }
 
-        private List<PluginResult> HttpGetResult(string url, Dictionary<string, string> parameters)
+        private List<PluginResult> HttpGetResult(HttpMethod method, string url, Dictionary<string, string> parameters)
         {
             var log = new List<PluginResult>();
 
             try
             {
                 var client = new HttpClient();
-                var request = new HttpRequestMessage(HttpMethod.Get, url);
+                var request = new HttpRequestMessage(method, url);
 
                 AddHeaders(request, parameters);
 
@@ -194,90 +210,6 @@ namespace KronoMata.Plugins.Network
                         Detail = "For a complete list of status codes and their meaning, visit https://learn.microsoft.com/en-us/dotnet/api/system.net.httpstatuscode?view=net-6.0"
                     });
                 }
-            }
-            catch (Exception ex)
-            {
-                log.Add(new PluginResult()
-                {
-                    IsError = true,
-                    Message = ex.Message,
-                    Detail = ex.StackTrace ?? String.Empty
-                });
-            }
-
-            return log;
-        }
-
-        private List<PluginResult> HttpPutResult(string url, Dictionary<string, string> parameters)
-        {
-            var log = new List<PluginResult>();
-
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                log.Add(new PluginResult()
-                {
-                    IsError = true,
-                    Message = ex.Message,
-                    Detail = ex.StackTrace ?? String.Empty
-                });
-            }
-
-            return log;
-        }
-
-        private List<PluginResult> HttpPostResult(string url, Dictionary<string, string> parameters)
-        {
-            var log = new List<PluginResult>();
-
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                log.Add(new PluginResult()
-                {
-                    IsError = true,
-                    Message = ex.Message,
-                    Detail = ex.StackTrace ?? String.Empty
-                });
-            }
-
-            return log;
-        }
-
-        private List<PluginResult> HttpPatchResult(string url, Dictionary<string, string> parameters)
-        {
-            var log = new List<PluginResult>();
-
-            try
-            {
-
-            }
-            catch (Exception ex)
-            {
-                log.Add(new PluginResult()
-                {
-                    IsError = true,
-                    Message = ex.Message,
-                    Detail = ex.StackTrace ?? String.Empty
-                });
-            }
-
-            return log;
-        }
-
-        private List<PluginResult> HttpDeleteResult(string url, Dictionary<string, string> parameters)
-        {
-            var log = new List<PluginResult>();
-
-            try
-            {
-
             }
             catch (Exception ex)
             {
