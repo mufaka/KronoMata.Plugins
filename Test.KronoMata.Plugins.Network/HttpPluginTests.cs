@@ -7,6 +7,8 @@ namespace Test.KronoMata.Plugins.Network
 {
     public class HttpPluginTests
     {
+        private const string HTTPBIN_ROOT = "http://localhost:88/anything";
+
         [SetUp]
         public void Setup()
         {
@@ -99,13 +101,12 @@ namespace Test.KronoMata.Plugins.Network
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", "http://httpbin.org/anything" }
+                { "Uri", HTTPBIN_ROOT }
             };
 
             var log = ExecutePlugin(configuration);
             Assert.That(log.Count, Is.EqualTo(1));
             Assert.That(log[0].IsError, Is.False);
-
         }
 
         [Test]
@@ -114,7 +115,7 @@ namespace Test.KronoMata.Plugins.Network
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", "http://httpbin.org/anythingbutthis" }
+                { "Uri", HTTPBIN_ROOT + "butthis" }
             };
 
             var log = ExecutePlugin(configuration);
@@ -133,7 +134,7 @@ Kronomata-Header-2=Header 2 Value";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", "http://httpbin.org/anything" },
+                { "Uri", HTTPBIN_ROOT },
                 { "Headers", headerValue }
             };
 
@@ -159,7 +160,7 @@ biz=baz";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", "http://httpbin.org/anything" },
+                { "Uri", HTTPBIN_ROOT },
                 { "Query Parameters", queryValue }
             };
 
@@ -185,7 +186,7 @@ biz 1=baz 1";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", "http://httpbin.org/anything" },
+                { "Uri", HTTPBIN_ROOT },
                 { "Query Parameters", queryValue }
             };
 
@@ -211,7 +212,7 @@ biz 1=baz 1";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", "http://httpbin.org/anything?existing=hello" },
+                { "Uri", HTTPBIN_ROOT + "?existing=hello" },
                 { "Query Parameters", queryValue }
             };
 
@@ -230,13 +231,70 @@ biz 1=baz 1";
             Assert.That(arg3, Is.EqualTo("hello"));
         }
 
+        [Test]
+        public void Can_Get_Http_With_Body()
+        {
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", HTTPBIN_ROOT },
+                { "Body", "I am a body" }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+
+            if (log[0].IsError )
+            {
+                Console.WriteLine(log[0].Detail);
+            }
+
+            Assert.That(log[0].IsError, Is.False);
+
+            var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
+
+            Assert.That(httpBinResponse.data, Is.EqualTo("I am a body"));
+        }
+
+        [Test]
+        public void Can_Get_Http_With_JsonBody()
+        {
+            var jsonBody = "{ 'message': 'I am a message.' }";
+
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", HTTPBIN_ROOT },
+                { "Body", jsonBody },
+                { "Body Is Json", "True" }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+
+            if (log[0].IsError)
+            {
+                Console.WriteLine(log[0].Detail);
+            }
+
+            Assert.That(log[0].IsError, Is.False);
+
+            var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
+
+            Assert.That(httpBinResponse.json, Is.EqualTo(jsonBody));
+        }
+
+
+
         private class HttpBinResponse
         {
             public Dictionary<string, string> args { get; set; }
             public Dictionary<string, string> headers { get; set; }
+            public string data { get; set; }
+            public string method { get; set; }
             public string origin { get; set; }
             public string url { get; set; }
-            public JObject json { get; set; }
+            public string json { get; set; }
             public Dictionary<string, string> forms { get; set; }
         }
     }
