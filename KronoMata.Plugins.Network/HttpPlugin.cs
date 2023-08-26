@@ -1,7 +1,6 @@
 ﻿using KronoMata.Public;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Encodings.Web;
 
 namespace KronoMata.Plugins.Network
 {
@@ -68,21 +67,6 @@ namespace KronoMata.Plugins.Network
                     IsRequired = false
                 });
 
-                parameters.Add(new PluginParameter()
-                {
-                    Name = "Authentication User",
-                    Description = "The basic authentication username.",
-                    DataType = ConfigurationDataType.String,
-                    IsRequired = false
-                });
-
-                parameters.Add(new PluginParameter()
-                {
-                    Name = "Authentication Password",
-                    Description = "The basic authentication password",
-                    DataType = ConfigurationDataType.Password,
-                    IsRequired = false
-                });
 
                 return parameters;
             }
