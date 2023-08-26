@@ -1,13 +1,13 @@
 using KronoMata.Plugins.Network;
 using KronoMata.Public;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Test.KronoMata.Plugins.Network
 {
     public class HttpPluginTests
     {
-        private const string HTTPBIN_ROOT = "http://localhost:88/anything";
+        private const string HTTPBIN_ROOT_HTTP = "http://localhost:88/anything";
+        private const string HTTPS_ROOT = "https://www.google.com/";
 
         [SetUp]
         public void Setup()
@@ -101,7 +101,7 @@ namespace Test.KronoMata.Plugins.Network
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT }
+                { "Uri", HTTPBIN_ROOT_HTTP }
             };
 
             var log = ExecutePlugin(configuration);
@@ -110,12 +110,35 @@ namespace Test.KronoMata.Plugins.Network
         }
 
         [Test]
+        public void Can_Get_Https_With_No_Parameters()
+        {
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "GET" },
+                { "Uri", HTTPS_ROOT }
+            };
+
+            var log = ExecutePlugin(configuration);
+
+            Assert.That(log.Count, Is.EqualTo(1));
+
+            if (log[0].IsError)
+            {
+                Console.WriteLine(log[0].Message);
+                Console.WriteLine(log[0].Detail);
+            }
+
+            Assert.That(log[0].IsError, Is.False);
+        }
+
+
+        [Test]
         public void Cannot_Get_Http_With_Incorrect_Url()
         {
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT + "butthis" }
+                { "Uri", HTTPBIN_ROOT_HTTP + "butthis" }
             };
 
             var log = ExecutePlugin(configuration);
@@ -134,7 +157,7 @@ Kronomata-Header-2=Header 2 Value";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT },
+                { "Uri", HTTPBIN_ROOT_HTTP },
                 { "Headers", headerValue }
             };
 
@@ -160,7 +183,7 @@ biz=baz";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT },
+                { "Uri", HTTPBIN_ROOT_HTTP },
                 { "Query Parameters", queryValue }
             };
 
@@ -186,7 +209,7 @@ biz 1=baz 1";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT },
+                { "Uri", HTTPBIN_ROOT_HTTP },
                 { "Query Parameters", queryValue }
             };
 
@@ -212,7 +235,7 @@ biz 1=baz 1";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT + "?existing=hello" },
+                { "Uri", HTTPBIN_ROOT_HTTP + "?existing=hello" },
                 { "Query Parameters", queryValue }
             };
 
@@ -237,7 +260,7 @@ biz 1=baz 1";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT },
+                { "Uri", HTTPBIN_ROOT_HTTP },
                 { "Body", "I am a body" }
             };
 
@@ -264,7 +287,7 @@ biz 1=baz 1";
             var configuration = new Dictionary<string, string>
             {
                 { "Method", "GET" },
-                { "Uri", HTTPBIN_ROOT },
+                { "Uri", HTTPBIN_ROOT_HTTP },
                 { "Body", jsonBody },
                 { "Body Is Json", "True" }
             };

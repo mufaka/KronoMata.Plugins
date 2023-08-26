@@ -121,6 +121,10 @@ namespace KronoMata.Plugins.Network
                     {
                         throw new ArgumentException("The Uri scheme must be either http or https.");
                     }
+                    else if (uri.Scheme.ToLower() == "https")
+                    {
+                        ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+                    }
 
                     var method = pluginConfig["Method"];
                     url = GetUrlWithQueryStringParameters(url, pluginConfig);
