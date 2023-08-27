@@ -280,6 +280,33 @@ biz 1=baz 1";
         }
 
         [Test]
+        public void Can_Put_Http_With_Body()
+        {
+            var configuration = new Dictionary<string, string>
+            {
+                { "Method", "PUT" },
+                { "Uri", HTTPBIN_ROOT_HTTP },
+                { "Body", "I am a body" }
+            };
+
+            var log = ExecutePlugin(configuration);
+            Assert.That(log.Count, Is.EqualTo(1));
+
+            if (log[0].IsError )
+            {
+                Console.WriteLine(log[0].Detail);
+            }
+
+            Assert.That(log[0].IsError, Is.False);
+
+            var httpBinResponse = JsonConvert.DeserializeObject<HttpBinResponse>(log[0].Detail);
+
+            Assert.That(httpBinResponse.data, Is.EqualTo("I am a body"));
+        }
+
+
+
+        [Test]
         public void Can_Get_Http_With_JsonBody()
         {
             var jsonBody = "{ 'message': 'I am a message.' }";
