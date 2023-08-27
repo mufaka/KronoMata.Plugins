@@ -132,7 +132,7 @@ namespace KronoMata.Plugins.SysAdmin
                 {
                     IsError = false,
                     Message = $"{Environment.MachineName} Host Information",
-                    Detail = logBuffer.ToString()
+                    Detail = detail
                 });
 
             }
