@@ -48,7 +48,7 @@ namespace KronoMata.Plugins.SysAdmin
                 var hardwareInfo = new HardwareInfo(useAsteriskInWMI: false);
                 var logBuffer = new StringBuilder();
 
-                if (pluginConfig.ContainsKey("") && pluginConfig[""] == "True")
+                if (pluginConfig.ContainsKey("Get OS") && pluginConfig["Get OS"] == "True")
                 {
                     hardwareInfo.RefreshOperatingSystem();
                     logBuffer.AppendLine("Operating System");
