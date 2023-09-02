@@ -181,7 +181,6 @@ namespace KronoMata.Plugins.Network
                     using var reader = new StreamReader(response.Content.ReadAsStream());
                     var result = reader.ReadToEnd();
 
-                    // TODO: The result should probably be trimmed
                     log.Add(new PluginResult()
                     {
                         IsError = false,
