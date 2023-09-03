@@ -230,6 +230,8 @@ namespace KronoMata.Plugins.Network
                     client.UploadFile(fileStream, Path.GetFileName(file.Path), true);
                 }
 
+                client.Disconnect();
+
                 log.Add(new PluginResult()
                 {
                     IsError = false,
