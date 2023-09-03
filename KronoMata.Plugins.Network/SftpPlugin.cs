@@ -2,6 +2,7 @@
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using Renci.SshNet;
+using System.Reflection.Metadata;
 
 namespace KronoMata.Plugins.Network
 {
@@ -219,30 +220,102 @@ namespace KronoMata.Plugins.Network
                 var client = GetSftpClient(pluginConfig);
                 client.Connect();
 
-                if (pluginConfig.ContainsKey("Remote Directory") ) 
+                try
                 {
-                    client.ChangeDirectory(pluginConfig["Remote Directory"]);
+                    if (pluginConfig.ContainsKey("Remote Directory"))
+                    {
+                        client.ChangeDirectory(pluginConfig["Remote Directory"]);
+                    }
+
+                    foreach (var file in result.Files)
+                    {
+                        var localPath = Path.Combine(localDirectory, file.Path);
+                        using var fileStream = File.OpenRead(localPath);
+                        client.UploadFile(fileStream, Path.GetFileName(file.Path), true);
+                        fileStream.Close();
+
+                        if (pluginConfig["Delete"] == "True")
+                        {
+                            File.Delete(localPath);
+                        }
+                    }
+
+                    log.Add(new PluginResult()
+                    {
+                        IsError = false,
+                        Message = "Finished uploading files.",
+                        Detail = $"Uploaded {result.Files.Count()} files."
+                    });
                 }
-
-                foreach (var file in result.Files)
+                finally
                 {
-                    using var fileStream = File.OpenRead(Path.Combine(localDirectory, file.Path));
-                    client.UploadFile(fileStream, Path.GetFileName(file.Path), true);
+                    client.Disconnect();
                 }
-
-                client.Disconnect();
-
-                log.Add(new PluginResult()
-                {
-                    IsError = false,
-                    Message = "Finished uploading files.",
-                    Detail = $"Uploaded {result.Files.Count()} files."
-                });
             }
         }
  
         private void ReceiveFiles(List<PluginResult> log, Dictionary<string, string> pluginConfig)
         {
+            var localDirectory = pluginConfig["Local Directory"];
+
+            if (!Directory.Exists(localDirectory))
+            {
+                throw new ArgumentException("Local directory not found.", localDirectory);
+            }
+
+            var globPattern = "*";
+
+            if (pluginConfig.ContainsKey("Glob Pattern"))
+            {
+                globPattern = String.IsNullOrWhiteSpace(pluginConfig["Glob Pattern"]) ? globPattern : pluginConfig["Glob Pattern"].Trim();
+            }
+
+            var matcher = new Matcher();
+            matcher.AddInclude(globPattern);
+
+            var client = GetSftpClient(pluginConfig);
+            client.Connect();
+
+            try
+            {
+                var remoteDirectory = pluginConfig.ContainsKey("Remote Directory") ? pluginConfig["Remote Directory"] : ".";
+                var files = client.ListDirectory(remoteDirectory);
+                var downloadCount = 0;
+
+                if (files.Count() > 0)
+                {
+                    foreach (var file in files)
+                    {
+                        if (file.IsRegularFile)
+                        {
+                            if (matcher.Match(file.Name).HasMatches)
+                            {
+                                downloadCount++;
+                                var localPath = Path.Combine(localDirectory, file.Name);
+                                using var stream = File.Create(localPath);
+                                client.DownloadFile(file.FullName, stream);
+                                stream.Close();
+
+                                if (pluginConfig["Delete"] == "True")
+                                {
+                                    client.DeleteFile(file.FullName);
+                                }
+                            }
+                        }
+                    }
+
+                    log.Add(new PluginResult()
+                    {
+                        IsError = false,
+                        Message = $"Downloaded {downloadCount} file(s)",
+                        Detail = $"{remoteDirectory} had {downloadCount} file(s) matching the glob pattern {globPattern}"
+                    });
+                }
+            }
+            finally
+            {
+                client.Disconnect();
+            }
 
         }
     }
