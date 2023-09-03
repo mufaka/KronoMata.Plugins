@@ -1,5 +1,7 @@
 ﻿using KronoMata.Public;
-using System.Net;
+using Microsoft.Extensions.FileSystemGlobbing;
+using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
+using Renci.SshNet;
 
 namespace KronoMata.Plugins.Network
 {
@@ -71,7 +73,16 @@ namespace KronoMata.Plugins.Network
                     Name = "Remote Directory",
                     Description = "The remote directory where files will be sent to or received from.",
                     DataType = ConfigurationDataType.String,
-                    IsRequired = true
+                    IsRequired = false
+                });
+
+                // https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.filesystemglobbing.matcher?view=dotnet-plat-ext-7.0
+                parameters.Add(new PluginParameter()
+                {
+                    Name = "Glob Pattern",
+                    Description = "A Glob pattern to use for filtering files from the source. Eg: * for all files, *.txt for all .txt files, etc.",
+                    DataType = ConfigurationDataType.String,
+                    IsRequired = false
                 });
 
                 parameters.Add(new PluginParameter()
@@ -162,12 +173,70 @@ namespace KronoMata.Plugins.Network
             return log;
         }
 
+        private SftpClient GetSftpClient(Dictionary<string, string> pluginConfig)
+        {
+            var host = pluginConfig["Server"];
+            var port = int.TryParse(pluginConfig["Port"], out int portNumber) ? portNumber : 22;
+            var user = pluginConfig["User"];
+            var password = pluginConfig["Password"];
+
+            return new SftpClient(host, port, user, password);
+        }
+
         private void SendFiles(List<PluginResult> log, Dictionary<string, string> pluginConfig)
         {
             var localDirectory = pluginConfig["Local Directory"];
 
-            // should have a glob pattern parameter.
-            var files = Directory.GetFiles(localDirectory, "*", SearchOption.TopDirectoryOnly);
+            if (!Directory.Exists(localDirectory))
+            {
+                throw new ArgumentException("Local directory not found.", localDirectory);
+            }
+
+            var globPattern = "*";
+
+            if (pluginConfig.ContainsKey("Glob Pattern"))
+            {
+                globPattern = String.IsNullOrWhiteSpace(pluginConfig["Glob Pattern"]) ? globPattern : pluginConfig["Glob Pattern"].Trim();
+            }
+            
+            var directoryInfo = new DirectoryInfo(localDirectory);
+            var matcher = new Matcher();
+            matcher.AddInclude(globPattern);
+
+            var result = matcher.Execute(new DirectoryInfoWrapper(directoryInfo));
+
+            if (!result.HasMatches)
+            {
+                log.Add(new PluginResult()
+                {
+                    IsError = false,
+                    Message = "No matching files found.",
+                    Detail = $"{localDirectory} has no files matching the glob pattern {globPattern}"
+                });
+            }
+            else
+            {
+                var client = GetSftpClient(pluginConfig);
+                client.Connect();
+
+                if (pluginConfig.ContainsKey("Remote Directory") ) 
+                {
+                    client.ChangeDirectory(pluginConfig["Remote Directory"]);
+                }
+
+                foreach (var file in result.Files)
+                {
+                    using var fileStream = File.OpenRead(Path.Combine(localDirectory, file.Path));
+                    client.UploadFile(fileStream, Path.GetFileName(file.Path), true);
+                }
+
+                log.Add(new PluginResult()
+                {
+                    IsError = false,
+                    Message = "Finished uploading files.",
+                    Detail = $"Uploaded {result.Files.Count()} files."
+                });
+            }
         }
  
         private void ReceiveFiles(List<PluginResult> log, Dictionary<string, string> pluginConfig)
