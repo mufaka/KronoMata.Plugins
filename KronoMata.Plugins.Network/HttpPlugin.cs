@@ -10,7 +10,7 @@ namespace KronoMata.Plugins.Network
 
         public string Description { get { return "Sends a request to the configured endpoint."; } }
 
-        public string Version { get { return "1.1"; } }
+        public string Version { get { return "1.2"; } }
 
         public List<PluginParameter> Parameters
         {
