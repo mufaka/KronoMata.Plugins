@@ -283,14 +283,18 @@ namespace KronoMata.Plugins.Network
             if (parameters.ContainsKey("Body"))
             {
                 var body = parameters["Body"];
-                var contentIsJson = false;
 
-                if (parameters.ContainsKey("Body Is Json"))
+                if (!String.IsNullOrWhiteSpace(body))
                 {
-                    contentIsJson = parameters["Body Is Json"] == "True";
-                }
+                    var contentIsJson = false;
 
-                message.Content = contentIsJson ? JsonContent.Create(body) : new StringContent(body);
+                    if (parameters.ContainsKey("Body Is Json"))
+                    {
+                        contentIsJson = parameters["Body Is Json"] == "True";
+                    }
+
+                    message.Content = contentIsJson ? JsonContent.Create(body) : new StringContent(body);
+                }
             }
         }
 
